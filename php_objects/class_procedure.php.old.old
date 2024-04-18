@@ -1,0 +1,65 @@
+<?php
+/*
+date: 2015-06-28
+created by: ritesh
+description: procedure class; start object to call other objects with variables
+*/
+class procedure {
+	public function totalrec() {
+	$devdbip = "localhost";
+	$devdbuser = "root";
+	$devdbpass = "wortel";
+	$devdb = "db_php_backup";
+
+		if ($devmysql = new mysqli ($devdbip, $devdbuser, $devdbpass, $devdb)) {
+			echo "Connection to database successful.\n";
+			if ($getallrec = $devmysql->query("SELECT * FROM tbl_devices_csv")) {
+				echo "Database query was successful.\n";
+				$numrows = $getallrec->num_rows;
+				echo "There are $numrows number of records in this table.\n";
+				for ($pointer = 1; $pointer <= $numrows; $pointer++) {
+					$devtype = $devmysql->query("SELECT * FROM `tbl_devices_csv` WHERE `id` =$pointer")->fetch_object()->Type;
+					echo "$devtype\n";
+					if ($devtype != "MikroTik") {
+						$devmap = $devmysql->query("SELECT * FROM `tbl_devices_csv` WHERE `id` = $pointer")->fetch_object()->Maps;
+						$callcreatepath = new createfs($devmap);
+						$createfspath = $callcreatepath->createpath();
+						$devipslist = $devmysql->query("SELECT * FROM `tbl_devices_csv` WHERE `id` = $pointer")->fetch_object()->Addresses;
+						$qry_devips_expde = explode (", ", $devipslist);
+						$cnt_devips = count ($qry_devips_expde);
+						if ($getallrec2 =$devmysql->query("SELECT * FROM tbl_password")) {
+							$numrows2 = $getallrec2->num_rows;
+							for ($ippointer = 0; $ippointer < $cnt_devips; $ippointer++) {
+								$devipaddcsv = $qry_devips_expde[$ippointer];
+								$ipchk1 = explode (".", $devipaddcsv);
+								$string1 = $ipchk1[0].$ipchk1[1];								
+								for ($pointer2 = 1; $pointer2 <= $numrows2 ; $pointer2++) {
+									$passip = $devmysql->query("SELECT * FROM `tbl_password` WHERE `id`=$pointer2")->fetch_object()->IPRange;
+									$passmap = $devmysql->query("SELECT * FROM `tbl_password` WHERE `id`=$pointer2")->fetch_object()->Maps;
+									if ($passmap == $devmap) {
+										$ipchk2 = explode (".", $passip);
+										$string2 = $ipchk2[0].$ipchk2[1];
+										if ($string1 == $string2) {
+											echo "Retreiving credentials.\n";
+											$devuser = $devmysql->query("SELECT username FROM tbl_password WHERE id = '$pointer2'")->fetch_object()->username;
+											$devpass = $devmysql->query("SELECT password FROM tbl_password WHERE id = '$pointer2'")->fetch_object()->password;
+											$startbackup = new backup("$devipaddcsv", "$devuser", "$devpass", "$devtype", "$devmap");
+											$startbackup->scp();
+											} else {
+											echo "No credentials found.\n";
+										}//end if string1 and string2
+									}//end of passmap devmap
+								} //end of $pointer2 for loop
+							}//end of $ippointer
+						}//end of getallrec2
+					}//end of if devtype is not MikroTik
+				}//end of $pointer for loop
+				} else {
+				echo "Failed to query database.\n";
+			} //end query all rows $devmysql
+			} else {
+		echo "connection failed: ".$devmysql->connect_error."\n";
+		} //if !$devmysql
+	}
+}
+?>
