@@ -1,0 +1,28 @@
+<?php
+/*
+date: 2015-06-28
+created by: ritesh
+description: extfuncheck class to check functions and extensions
+*/
+class extfuncheck {
+	public function extensionlist() {
+		if ($extensionssh2 = extension_loaded('ssh2')) {
+			echo "ssh2 extension is loaded.\n";
+			} else {
+			echo "ssh2 extension not found.\n";
+		}//endif for extension ssh2 check
+		
+	}//end of extensionlist method
+	
+	public function functionlist(){
+		if ($functionmkdir = function_exists('mkdirm')) {
+			echo "mkdir filesystem function is available.\n";
+			} else {
+			echo "mkdir is not available Jim.\n";
+		}//endif for funtionmkdir check
+		
+	}//end of functionlist method
+	
+	
+}//end of extfuncheck object
+?>
